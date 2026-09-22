@@ -1,0 +1,3 @@
+variant,approach,input_channels,parameters_M,gflops,val_mAP50,val_mAP50_95,test_mAP50,test_mAP50_95,test_precision,test_recall,inference_ms
+v34,Early Fusion (RGBA 4ch),4,3.01,8.1,0.8420,0.5974,0.8368,0.5867,0.8176,0.8247,3.73
+v35,Dual-Backbone Gated Attention (6ch),6,4.45,16.2,0.8773,0.6351,0.8754,0.6484,0.9068,0.8105,3.00

@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.ipynb_checkpoints
+
+# Training runs & intermediate checkpoints
+runs/
+*.cache
+
+# Large image/array dataset directories (kept locally, reproducible via scripts/)
+data/fusion/
+data/fusion_dual/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

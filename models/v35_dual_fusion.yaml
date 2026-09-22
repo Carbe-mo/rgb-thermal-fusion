@@ -1,0 +1,67 @@
+# v35_dual_fusion — Dual-Backbone RGB-Thermal Fusion with Multi-Scale Gated Attention
+nc: 4
+scales:
+  n: [0.33, 0.25, 1024]
+
+# Input: 6 channels [RGB (0:3), Thermal (3:6)]
+backbone:
+  # =========================================================================
+  # 0: RAW 6-CHANNEL INPUT IDENTITY (saved for branching)
+  # =========================================================================
+  - [-1, 1, nn.Identity, []]              # 0: saves raw 6ch input
+
+  # =========================================================================
+  # STREAM A: RGB STREAM (Extracts visible textures and contours)
+  # =========================================================================
+  - [0, 1, SliceChannels, [0, 3]]         # 1: Slices RGB (3ch)
+  - [-1, 1, Conv, [64, 3, 2]]             # 2: P1/2 (16 ch)
+  - [-1, 1, Conv, [128, 3, 2]]            # 3: P2/4 (32 ch)
+  - [-1, 3, C2f, [128, True]]             # 4: C2f (32 ch)
+  - [-1, 1, Conv, [256, 3, 2]]            # 5: P3/8 (64 ch)
+  - [-1, 6, C2f, [256, True]]             # 6: C2f (64 ch) -> RGB P3 feature
+  - [-1, 1, Conv, [512, 3, 2]]            # 7: P4/16 (128 ch)
+  - [-1, 6, C2f, [512, True]]             # 8: C2f (128 ch) -> RGB P4 feature
+  - [-1, 1, Conv, [1024, 3, 2]]           # 9: P5/32 (256 ch)
+  - [-1, 3, C2f, [1024, True]]            # 10: C2f (256 ch)
+  - [-1, 1, SPPF, [1024, 5]]              # 11: RGB SPPF (256 ch) -> RGB P5 feature
+
+  # =========================================================================
+  # STREAM B: THERMAL STREAM (Extracts heat signatures via Dilated ECA)
+  # =========================================================================
+  - [0, 1, SliceChannels, [3, 6]]         # 12: Slices Thermal (3ch)
+  - [-1, 1, Conv, [64, 3, 2]]             # 13: P1/2 (16 ch)
+  - [-1, 1, Conv, [128, 3, 2]]            # 14: P2/4 (32 ch)
+  - [-1, 3, C2f_ECA, [128, True]]         # 15: C2f_ECA (32 ch)
+  - [-1, 1, Conv, [256, 3, 2]]            # 16: P3/8 (64 ch)
+  - [-1, 6, C2f_ECA, [256, True]]         # 17: C2f_ECA (64 ch) -> Thermal P3 feature
+  - [-1, 1, Conv, [512, 3, 2]]            # 18: P4/16 (128 ch)
+  - [-1, 6, C2f_ECA_Dilated, [512, True]] # 19: C2f_ECA_Dilated (128 ch) -> Thermal P4 feature
+  - [-1, 1, Conv, [1024, 3, 2]]           # 20: P5/32 (256 ch)
+  - [-1, 3, C2f_ECA_Dilated, [1024, True]]# 21: C2f_ECA_Dilated (256 ch)
+  - [-1, 1, SPPF, [1024, 5]]              # 22: Thermal SPPF (256 ch) -> Thermal P5 feature
+
+  # =========================================================================
+  # MULTI-SCALE GATED FUSION (P3, P4, P5)
+  # =========================================================================
+  - [[6, 17], 1, GatedFusion, [64]]       # 23: Fused P3 (64 ch)
+  - [[8, 19], 1, GatedFusion, [128]]      # 24: Fused P4 (128 ch)
+  - [[11, 22], 1, GatedFusion, [256]]     # 25: Fused P5 (256 ch)
+
+head:
+  - [25, 1, nn.Upsample, [None, 2, "nearest"]] # 26: Upsample Fused P5
+  - [[-1, 24], 1, Concat, [1]]                 # 27: Cat with Fused P4 (256+128=384 ch)
+  - [-1, 3, C2f, [512]]                        # 28: Head C2f P4 (128 ch scaled)
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 29: Upsample to P3
+  - [[-1, 23], 1, Concat, [1]]                 # 30: Cat with Fused P3 (128+64=192 ch)
+  - [-1, 3, C2f, [256]]                        # 31: Head C2f P3 (64 ch scaled) -> Detect P3
+
+  - [-1, 1, Conv, [256, 3, 2]]                 # 32: Downsample to P4 (64 ch scaled)
+  - [[-1, 28], 1, Concat, [1]]                 # 33: Cat with Head P4 (64+128=192 ch)
+  - [-1, 3, C2f, [512]]                        # 34: Head C2f P4 (128 ch scaled) -> Detect P4
+
+  - [-1, 1, Conv, [512, 3, 2]]                 # 35: Downsample to P5 (128 ch scaled)
+  - [[-1, 26], 1, Concat, [1]]                 # 36: Cat with Head P5 (128+256=384 ch)
+  - [-1, 3, C2f, [1024]]                       # 37: Head C2f P5 (256 ch scaled) -> Detect P5
+
+  - [[31, 34, 37], 1, Detect, [nc]]            # 38: Detect(P3, P4, P5)
