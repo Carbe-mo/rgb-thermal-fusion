@@ -1,0 +1,11 @@
+path: D:\Yolo\Data\project_flir\thermal-yolo\data\fusion_dual
+train: D:\Yolo\Data\project_flir\thermal-yolo\data\fusion_dual\train.txt
+val: D:\Yolo\Data\project_flir\thermal-yolo\data\fusion_dual\val.txt
+test: D:\Yolo\Data\project_flir\thermal-yolo\data\fusion_dual\test.txt
+nc: 4
+names:
+  0: person
+  1: trolley
+  2: bag
+  3: unattended
+channels: 6
