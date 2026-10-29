@@ -1,119 +1,103 @@
-# Multi-Modal RGB-Thermal Fusion Object Detection (DualX-YOLO)
+# Asymmetric Dual-Stream RGB–LWIR Attention Fusion & 2D-Grid CWAR for Transit Security Surveillance
 
-[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange)](https://pytorch.org/)
-[![Ultralytics](https://img.shields.io/badge/Ultralytics-YOLOv8%2B-green)](https://github.com/ultralytics/ultralytics)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg?style=flat&logo=pytorch)](https://pytorch.org)
+[![YOLOv8](https://img.shields.io/badge/Ultralytics-YOLOv8-blue.svg?style=flat)](https://github.com/ultralytics/ultralytics)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-An advanced multi-modal object detection framework fusing **Visible Spectrum (RGB)** and **Thermal Infrared (TIR)** imagery. Features early 4-channel pixel fusion and an asymmetric dual-backbone architecture with multi-scale **dynamic spatial-channel gated attention** (`GatedFusion`).
-
----
-
-## 🌟 Key Results (FLIR Benchmark)
-
-| Model Architecture | Modality | Params (M) | GFLOPs | Test mAP@50 (%) | Test mAP@50-95 (%) | Test Precision (%) | Test Recall (%) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| Single-Stream YOLOv8n (Baseline) | Thermal | 3.01 | 8.8 | 86.93 | 61.92 | 85.08 | 78.64 |
-| Single-Stream YOLO11n (Baseline) | Thermal | 2.59 | 6.6 | 87.37 | 62.55 | 83.24 | 82.76 |
-| **Early Fusion (v34, 4-Channel)** | RGB + TIR | 3.01 | 8.1 | 83.68 | 58.67 | 81.76 | **82.47** |
-| 🏆 **Dual-Backbone Gated Fusion (v35)** | **RGB + TIR** | **4.45** | **16.2** | **87.54** | **64.84** | **90.68** | 81.05 |
-
-### Per-Class Performance Gains (v35 Dual-Backbone vs. Baseline)
-- **Trolley**: **97.4%** (+2.1% improvement)
-- **Baggage / Luggage**: **92.1%** (+17.6% improvement)
-- **Unattended Baggage**: **84.3%** (+6.6% improvement)
-- **Overall Detection Precision**: **90.68%** (+5.6% improvement)
+Official repository for:
+1. **Multimodal RGB–LWIR Paper:** *"Asymmetric Dual-Stream RGB–LWIR Attention Fusion and 2D-Grid Anchor-Aligned Confidence-Weighted Regression for Transit Hub Security Surveillance"* (**92.33% Test mAP@50**, **69.02%–69.49% Test mAP@50–95**, **92.89% Val mAP@50**).
+2. **Single-Modality Thermal Paper:** *"Overcoming Radiant Heat Diffusion: Stage-Selective Dilated Attention in Lightweight YOLO for Real-Time Edge Thermal Surveillance"* (**88.15% Test mAP@50**).
 
 ---
 
-## 📐 Architectures
+## ⚡ Quick Copy-Paste Commands for Edge Device Latency & Power Benchmarking
 
-### 1. Dual-Backbone Multi-Scale Gated Fusion (v35)
-```
-Input: 6-Channel Tensor [RGB (0:3) | Thermal (3:6)]
-   │
-   ├─── Stream A: Visible RGB Backbone (Extracts texture, color, and fine edges)
-   │        ├── P3_rgb (64 ch)  ──┐
-   │        ├── P4_rgb (128 ch) ──┼────────┐
-   │        └── P5_rgb (256 ch) ──┼────────┼────────┐
-   │                              ▼        ▼        ▼
-   │                         [GatedFusion] [GatedFusion] [GatedFusion]
-   │                              ▲        ▲        ▲
-   └─── Stream B: Thermal Dilated ECA ──┘        │        │
-            ├── P3_th (64 ch)   ─────────────────┘        │
-            ├── P4_th (128 ch)  ──────────────────────────┘
-            └── P5_th (256 ch)
-                                  │        │        │
-                                  ▼        ▼        ▼
-                              Shared PANet Feature Neck
-                                          │
-                                          ▼
-                                   Detection Head
-```
+Clone this repository onto any edge device, workstation, or cloud server and run the exact command below for your target platform:
 
-### 2. Early Fusion (v34)
-- Integrates visual texture and thermal heatmaps at the pixel level into a 4-channel tensor `[R, G, B, T_gray]`.
-- First convolution initialized via **weight surgery**, preserving pretrained ImageNet weights with zero random disruption.
-
----
-
-## 🚀 Quick Start
-
-### Installation
+### 1. Clone & Setup (Run on Any Edge Device)
 ```bash
 git clone https://github.com/Carbe-mo/rgb-thermal-fusion.git
 cd rgb-thermal-fusion
-pip install -r requirements.txt
+pip install ultralytics torch torchvision numpy pandas
 ```
 
-### Data Preparation
-To generate the multi-channel training sets from paired RGB and thermal directories:
+---
 
-1. **Generate 4-channel RGBA images (for Early Fusion)**:
-   ```bash
-   python scripts/prepare_fusion_dataset.py --thermal_dir /path/to/thermal --rgb_dir /path/to/rgb --out_dir data/fusion
-   ```
-2. **Generate 6-channel native `.npy` arrays (for Dual Fusion)**:
-   ```bash
-   python scripts/prepare_dual_fusion_dataset.py --thermal_dir /path/to/thermal --rgb_dir /path/to/rgb --out_dir data/fusion_dual
-   ```
+### 2. Run Inference Latency & Throughput Suite on Edge CPU (Raspberry Pi 5, Raspberry Pi 4B, Rock Pi 4C+, Laptop/Server CPU)
+Benchmarks all multimodal dual-stream models (`v36_main`, `v36_eca_rgb`, `v38_ca_dilated`, `v38_cwar_triad`), our thermal champion (`v30`), and all YOLO baselines (`YOLOv8n/s`, `YOLOv10n/s`, `YOLO11n/s`) in isolated crash-safe subprocesses:
 
-### Training
-
-- **Train Dual-Backbone Gated Fusion (v35)**:
-  ```bash
-  python train_dual_fusion.py --data data/fusion_dual_data.yaml --epochs 100 --batch 16 --device 0
-  ```
-
-- **Train Early Fusion (v34)**:
-  ```bash
-  python train_early_fusion.py --data data/fusion_data.yaml --epochs 100 --batch 16 --device 0
-  ```
-
-### Evaluation
-Evaluate the trained models directly on test splits:
 ```bash
-python scripts/evaluate_fusion.py --model weights/v35_dual_fusion_best.pt --data data/fusion_dual_data.yaml --split test
+# Run full suite (all 11 models, 30 runs each) and save to results/multimodal_edge_benchmark.csv:
+python3 scripts/benchmark_multimodal_edge.py --device cpu --runs 30
+
+# Fast mode — run ONLY our proposed multimodal models + v30 thermal champion (10 runs each):
+python3 scripts/benchmark_multimodal_edge.py --device cpu --runs 10 --only-multimodal
+```
+> **Note for ARMv8.0 boards (Raspberry Pi 4B / Rock Pi 4C+):** If `OpenBLAS` gives a coretype warning, prefix with `OPENBLAS_CORETYPE=ARMV8`:
+> ```bash
+> OPENBLAS_CORETYPE=ARMV8 python3 scripts/benchmark_multimodal_edge.py --device cpu --runs 20 --skip-v10
+> ```
+
+---
+
+### 3. Run Inference Latency, Throughput & Onboard Power Suite on GPU (NVIDIA Jetson AGX Xavier / Orin / Nano, RTX GPU, A100)
+
+#### Option A: PyTorch GPU FP16 Benchmark (+ Automatic `jtop` Power Rail Telemetry on Jetson)
+```bash
+python3 scripts/benchmark_multimodal_edge.py --device 0 --half --runs 100
+```
+
+#### Option B: Jetson TensorRT FP16 Engine Build (`trtexec`) + `jtop` Hardware Power Rails
+Automatically compiles `.onnx` weights in `weights/` into TensorRT FP16 `.engine` files and measures GPU compute latency, FPS, Idle/Active Board Power (W), GPU Rail Power (W), Energy per Frame (mJ/frame), and Frames/Joule:
+```bash
+python3 scripts/benchmark_multimodal_edge.py --mode trt-jtop --out-csv results/jetson_multimodal_trt_power.csv
 ```
 
 ---
 
-## 📦 Model Weights
-Pretrained and fine-tuned checkpoints are provided directly in `weights/`:
-- `v35_dual_fusion_best.pt`: Fine-tuned dual-backbone checkpoint (mAP50-95 = 64.84%)
-- `v35_dual_fusion_best.onnx`: Exported ONNX graph for cross-platform inference
-- `v35_dual_fusion_pretrained.pt`: Pretrained dual-stream weights transfer checkpoint
-- `v34_early_fusion_best.pt`: Fine-tuned early fusion checkpoint
-- `v34_early_fusion_pretrained.pt`: Surgical 4-channel transfer checkpoint
+### 4. Synchronized In-Line Joulescope JS220 High-Speed DC Power & Energy Profiling
+When the edge device (Raspberry Pi 5 / Rock Pi 4C+ / RPi 4B) is wired through a **Joulescope JS220** connected to your host PC over SSH:
+
+```bash
+# Run from the host PC (automatically SSHes into the edge board and captures 2 MS/s Joulescope telemetry):
+python scripts/automated_power_suite.py <EDGE_DEVICE_IP>
+```
+Or to trigger a single model manually on the edge device during standalone power measurement:
+```bash
+# 6-channel Multimodal Dual-Stream Models:
+python3 -u scripts/measure_edge_power.py --weights weights/v36_main_best.pt --channels 6 --runs 10
+python3 -u scripts/measure_edge_power.py --weights weights/v36_eca_rgb_best.pt --channels 6 --runs 10
+python3 -u scripts/measure_edge_power.py --weights weights/v38_ca_dilated_best.pt --channels 6 --runs 10
+python3 -u scripts/measure_edge_power.py --weights CWAR_TRIAD --channels 6 --runs 10
+
+# 3-channel Single-Modality Thermal Models:
+python3 -u scripts/measure_edge_power.py --weights weights/v30_champion_best.pt --channels 3 --runs 10
+```
 
 ---
 
-## 📄 Citation & Attribution
-If you use this architecture or multi-modal fusion pipeline in your research, please cite:
-```bibtex
-@article{mohit2026dualx,
-  title={DualX-YOLO: Multi-Modal Visible-Thermal Object Detection with Receptive Field Expansion and Dynamic Gated Attention},
-  author={Mohit, Satya},
-  year={2026}
-}
-```
+## 📊 Multimodal RGB–LWIR Detection Benchmark (1,067 Paired Frames)
+
+Evaluated on the official validation split (213 images, 776 instances) and held-out test split (108 images, 390 instances):
+
+| Model / Fusion Architecture | Sensing Modality | Params (M) | GFLOPs | Val mAP@50 | Val mAP@50–95 | Test Precision | Test Recall | **Test mAP@50** | **Test mAP@50–95** |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **YOLOv8n (Stock Baseline)** | LWIR Only (3-ch) | 3.01 | 8.1 | 86.25% | 60.41% | 82.74% | 83.35% | 86.22% | 62.92% |
+| **v30 (Hybrid Dilated ECA Champion)** | LWIR Only (3-ch) | 3.01 | 8.1 | 87.52% | 63.40% | 87.81% | 83.40% | 88.15% | 64.73% |
+| **v34 (Early 4-ch Stem Concat)** | RGB + LWIR (4-ch) | 3.01 | 8.1 | 84.20% | 59.74% | 81.76% | 82.47% | 83.68% | 58.67% |
+| **Ours: `v38_ca_dilated` (Sym-Dil + NeckECA)** | RGB + LWIR (6-ch) | 4.50 | 11.6 | 89.33% | 65.52% | 87.32% | **86.12%** | 88.74% | 66.52% |
+| **Ours: `v36_main` (Asym CA+ECA Dual-Stream)** | RGB + LWIR (6-ch) | 4.51 | 11.6 | **90.53%** | **66.11%** | 91.50% | 85.05% | 89.75% | **66.99%** |
+| **Ours: `v36_eca_rgb` (Asym ECA Dual-Stream)** | RGB + LWIR (6-ch) | 4.50 | 11.6 | 89.75% | 65.86% | **93.01%** | 82.74% | **89.86%** | 66.76% |
+| **Ours: `3_Core4_MACAF` (Class-Aware Routing)** | RGB + LWIR (6-ch) | 16.52 | 42.9 | 92.68% | 68.76% | 92.13% | 86.47% | 92.12% | **69.47%** |
+| 👑 **Ours: `v38_cwar_triad` (2D-Grid CWAR Triad)** | **RGB + LWIR (6-ch)** | **13.51** | **34.8** | **92.86%** | **68.80%** | **91.79%** | **87.44%** | **92.33%** | **69.02%** |
+
+---
+
+## 📁 Pretrained Weights Included in `weights/`
+
+All PyTorch (`.pt`) and ONNX (`.onnx`) weights are pre-exported in `weights/` so no training or export is required on edge devices:
+- `weights/v36_main_best.pt` & `weights/v36_main_best.onnx` — Asymmetric Dual-Stream (`CA+ECA` RGB $d=1$, Dilated LWIR $d=2$)
+- `weights/v36_eca_rgb_best.pt` & `weights/v36_eca_rgb_best.onnx` — Asymmetric Dual-Stream (`ECA` RGB $d=1$, Dilated LWIR $d=2$)
+- `weights/v38_ca_dilated_best.pt` & `weights/v38_ca_dilated_best.onnx` — Symmetric Dilated Dual-Stream ($d=2$) + `PANetNeckECA`
+- `weights/v30_champion_best.pt` & `weights/v30_champion_best.onnx` — Single-Modality Thermal Hybrid Dilated ECA Champion
+- `weights/yolov8n.pt`, `yolov8s.pt`, `yolov10n.pt`, `yolov10s.pt`, `yolo11n.pt`, `yolo11s.pt` (and `.onnx` / `.espdl` quantized models)

@@ -1,0 +1,6 @@
+Device,Model,Channels,Params_M,Precision,Pure_Latency_ms,Pure_Median_ms,Pure_FPS,E2E_Latency_ms,E2E_FPS,VRAM_MB,Idle_Power_W,Active_Power_W,GPU_Rail_Power_W,Energy_per_Frame_mJ,Frames_per_Joule
+13th Gen Intel(R) Core(TM) i9-13950HX,Ours: v36_main (Asym CA+ECA Dual-Stream),6,4.51,FP32,81.19,80.58,12.32,81.73,12.24,0.0,,,,,
+13th Gen Intel(R) Core(TM) i9-13950HX,Ours: v36_eca_rgb (Asym ECA Dual-Stream),6,4.5,FP32,84.92,82.79,11.78,85.32,11.72,0.0,,,,,
+13th Gen Intel(R) Core(TM) i9-13950HX,Ours: v38_ca_dilated (Sym-Dilated + NeckECA),6,4.5,FP32,102.2,101.72,9.79,102.65,9.74,0.0,,,,,
+13th Gen Intel(R) Core(TM) i9-13950HX,Ours: v38_cwar_triad (3-Stream 2D-Grid CWAR),6,13.51,FP32,276.1,284.7,3.62,276.58,3.62,0.0,,,,,
+13th Gen Intel(R) Core(TM) i9-13950HX,Ours: v30 (Thermal Hybrid Dilated ECA),3,3.01,FP32,50.4,49.54,19.84,50.8,19.68,0.0,,,,,
