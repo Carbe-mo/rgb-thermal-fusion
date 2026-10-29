@@ -21,11 +21,13 @@ OUTPUT_CSV = PROJECT_ROOT / "results" / "power_benchmark_results.csv"
 
 # Models to evaluate (Name, weights_path, channels)
 DEFAULT_MODELS = [
+    ("Ours: v35_dual_fusion (Gated Dual)", "weights/v35_dual_fusion_best.pt", 6),
+    ("Ours: v34_early_fusion (4-Ch Early)", "weights/v34_early_fusion_best.pt", 4),
+    ("Ours: v30 (Thermal Dilated ECA)", "weights/v30_champion_best.pt", 3),
+    ("Ours: v38_cwar_triad (3-Stream CWAR)", "CWAR_TRIAD", 6),
     ("Ours: v36_main (Asym CA+ECA)", "weights/v36_main_best.pt", 6),
     ("Ours: v36_eca_rgb (Asym ECA)", "weights/v36_eca_rgb_best.pt", 6),
     ("Ours: v38_ca_dilated (Sym-Dil+NeckECA)", "weights/v38_ca_dilated_best.pt", 6),
-    ("Ours: v38_cwar_triad (3-Stream CWAR)", "CWAR_TRIAD", 6),
-    ("Ours: v30 (Thermal Dilated ECA)", "weights/v30_champion_best.pt", 3),
     ("YOLOv8n", "weights/yolov8n.pt", 3),
     ("YOLOv8s", "weights/yolov8s.pt", 3),
     ("YOLOv10n", "weights/yolov10n.pt", 3),
@@ -50,7 +52,7 @@ def save_power_row(row_dict):
 
 def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", password="rock",
                                   runs=10, models=None, remote_dir="~/rgb-thermal-fusion",
-                                  device_name="Rock Pi 4C+"):
+                                  device_name="Rock Pi 4C+", supply_voltage=5.30):
     if models is None:
         models = DEFAULT_MODELS
 
@@ -79,25 +81,38 @@ def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", 
 
     try:
         # 3. Measure Idle Baseline
-        print("\n[3/4] Measuring 15-second Idle Baseline...")
-        time.sleep(2)
-        data_idle = device.read(duration=15.0)
+        print("\n[3/4] Measuring 10-second Idle Baseline...")
+        time.sleep(1)
+        data_idle = device.read(duration=10.0)
         v_idle = np.abs(data_idle[:, 1])
         i_idle = np.abs(data_idle[:, 0])
+        if float(np.mean(v_idle)) < 2.0 or float(np.mean(v_idle)) > 6.5:
+            v_idle = np.full_like(i_idle, float(supply_voltage))
         p_idle = float(np.mean(v_idle * i_idle))
         mean_v_idle = float(np.mean(v_idle))
         mean_i_idle_ma = float(np.mean(i_idle)) * 1000.0
         print(f"  -> Stable Idle Baseline: {p_idle:.3f} W (Voltage: {mean_v_idle:.2f} V, Current: {mean_i_idle_ma:.1f} mA)")
 
         # 4. Measure Models
-        print("\n[4/4] Starting Synchronized Multi-Model Inferences...")
+        done_models = set()
+        if OUTPUT_CSV.exists():
+            with open(OUTPUT_CSV, mode="r", encoding="utf-8") as f:
+                for row in csv.DictReader(f):
+                    if row.get("Target_Device") == device_name:
+                        done_models.add(row.get("Model_Name"))
+
+        print("\n[4/4] Starting Synchronized Multi-Model Inferences...", flush=True)
         for name, weights, ch in models:
+            if name in done_models:
+                print(f"\n  [SKIP] {name} already recorded for {device_name}.", flush=True)
+                continue
+            model_runs = 5 if weights == "CWAR_TRIAD" else runs
             print("\n" + "=" * 80)
-            print(f"  PROFILING: {name} (Weights: {weights}, Channels: {ch})")
-            print("=" * 80)
+            print(f"  PROFILING: {name} (Weights: {weights}, Channels: {ch}, Runs: {model_runs})")
+            print("=" * 80, flush=True)
 
             # Start remote runner
-            cmd = f"cd {remote_dir} && python3 -u scripts/measure_edge_power.py --weights {weights} --runs {runs} --channels {ch}"
+            cmd = f"cd {remote_dir} && python3 -u scripts/measure_edge_power.py --weights {weights} --runs {model_runs} --channels {ch}"
             print(f"  [Remote] Launching: {cmd}")
             stdin, stdout, stderr = ssh.exec_command(cmd)
 
@@ -165,6 +180,8 @@ def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", 
             samples = device.stream_buffer.samples_get(start_id, end_id, fields=["current", "voltage"])
             i_raw = np.abs(samples["signals"]["current"]["value"])
             v_raw = np.abs(samples["signals"]["voltage"]["value"])
+            if float(np.mean(v_raw)) < 2.0 or float(np.mean(v_raw)) > 6.5:
+                v_raw = np.full_like(i_raw, float(supply_voltage))
 
             # Compute power and energy metrics
             power_w = i_raw * v_raw
@@ -172,7 +189,7 @@ def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", 
             total_energy_j = p_active * inf_duration_s
             dynamic_power_w = max(0.0, p_active - p_idle)
 
-            energy_per_frame_j = total_energy_j / runs
+            energy_per_frame_j = total_energy_j / model_runs
             energy_per_frame_mj = energy_per_frame_j * 1000.0
             frames_per_joule = (1.0 / energy_per_frame_j) if energy_per_frame_j > 0 else 0.0
 
@@ -182,7 +199,7 @@ def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", 
             print("\n  " + "-" * 55)
             print(f"  MEASUREMENT RESULTS: {name}")
             print("  " + "-" * 55)
-            print(f"  -> Inferences Completed: {runs} frames in {inf_duration_s:.3f} s")
+            print(f"  -> Inferences Completed: {model_runs} frames in {inf_duration_s:.3f} s")
             print(f"  -> Mean Latency        : {avg_latency_ms:.2f} ms ({fps:.2f} FPS)")
             print(f"  -> Mean Voltage        : {mean_volts:.2f} V")
             print(f"  -> Mean Current        : {mean_curr_ma:.1f} mA")
@@ -192,14 +209,14 @@ def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", 
             print(f"  -> Total Energy Spent  : {total_energy_j:.3f} Joules")
             print(f"  -> Energy per Frame    : {energy_per_frame_mj:.2f} mJ / frame ⚡")
             print(f"  -> Energy Efficiency   : {frames_per_joule:.2f} Frames / Joule")
-            print("  " + "-" * 55)
+            print("  " + "-" * 55, flush=True)
 
             rec = {
                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "Target_Device": device_name,
                 "Model_Name": name,
                 "Weights": weights,
-                "Inferences": runs,
+                "Inferences": model_runs,
                 "Total_Duration_s": round(inf_duration_s, 3),
                 "Avg_Latency_ms": round(avg_latency_ms, 2),
                 "Avg_FPS": round(fps, 2),
@@ -226,7 +243,11 @@ def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", 
         for r in results:
             eff_fps_w = r['Avg_FPS'] / r['Active_Power_W'] if r['Active_Power_W'] > 0 else 0
             print(f"{r['Model_Name']:<25} | {r['Avg_Latency_ms']:<14.1f} | {r['Avg_FPS']:<6.2f} | {r['Active_Power_W']:<10.3f} | {r['Energy_per_Frame_mJ']:<18.1f} | {eff_fps_w:<10.2f}")
-        print("=" * 90)
+        print("=" * 90, flush=True)
+
+        print("\n[KEEP-ALIVE] Suite complete! Holding Joulescope power ON so board stays running...", flush=True)
+        while True:
+            time.sleep(2.0)
 
     finally:
         ssh.close()
@@ -243,10 +264,11 @@ if __name__ == "__main__":
     parser.add_argument("--remote-dir", type=str, default="~/rgb-thermal-fusion", help="Path to cloned repo on edge device")
     parser.add_argument("--device-name", type=str, default="Rock Pi 4C+", help="Device name for CSV logging")
     parser.add_argument("--runs", type=int, default=10, help="Number of synchronized inferences per model")
+    parser.add_argument("--supply-voltage", type=float, default=5.30, help="Fallback supply voltage (V) if V- sense wire is not attached")
     parser.add_argument("--only-multimodal", action="store_true", help="Only run multimodal models + v30 champion")
     args = parser.parse_args()
 
-    selected_models = DEFAULT_MODELS[:5] if args.only_multimodal else DEFAULT_MODELS
+    selected_models = DEFAULT_MODELS[:7] if args.only_multimodal else DEFAULT_MODELS
     run_automated_power_benchmark(
         target_ip=args.ip,
         username=args.user,
@@ -255,4 +277,5 @@ if __name__ == "__main__":
         models=selected_models,
         remote_dir=args.remote_dir,
         device_name=args.device_name,
+        supply_voltage=args.supply_voltage,
     )

@@ -35,6 +35,12 @@ def register_all():
     except Exception:
         pass
     try:
+        import modules.fusion as _mf
+        sys.modules["common.modules.fusion"] = _mf
+        _mf.register_fusion_modules()
+    except Exception:
+        pass
+    try:
         from common.modules.fusion import register_fusion_modules
         register_fusion_modules()
     except Exception:
@@ -63,6 +69,7 @@ def main():
 
     print(f"Loading weights: {args.weights}...", flush=True)
     if args.weights == "CWAR_TRIAD":
+        torch.set_num_threads(4)
         m1 = load_checkpoint(str(REPO_ROOT / "weights/v36_main_best.pt"))[0].float().to(device).eval()
         m2 = load_checkpoint(str(REPO_ROOT / "weights/v36_eca_rgb_best.pt"))[0].float().to(device).eval()
         m3 = load_checkpoint(str(REPO_ROOT / "weights/v38_ca_dilated_best.pt"))[0].float().to(device).eval()
