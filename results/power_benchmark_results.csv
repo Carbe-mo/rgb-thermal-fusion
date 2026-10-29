@@ -5,3 +5,10 @@ Timestamp,Target_Device,Model_Name,Weights,Inferences,Total_Duration_s,Avg_Laten
 2026-10-29 15:02:55,Rock Pi 4C+,Ours: v34_early_fusion (4-Ch Early),weights/v34_early_fusion_best.pt,10,12.816,1281.15,0.78,2.562,4.817,2.255,61.736,6173.59,0.16,5.30,908.9
 2026-10-29 15:03:23,Rock Pi 4C+,Ours: v30 (Thermal Dilated ECA),weights/v30_champion_best.pt,10,12.861,1284.27,0.78,2.562,4.924,2.362,63.329,6332.91,0.16,5.30,929.1
 2026-10-29 15:04:19,Rock Pi 4C+,Ours: v38_cwar_triad (3-Stream CWAR),CWAR_TRIAD,5,29.819,5963.67,0.17,2.562,5.752,3.190,171.514,34302.74,0.03,5.30,1085.3
+2026-10-29 15:31:41,Raspberry Pi 4B,Ours: v35_dual_fusion (Gated Dual),weights/v35_dual_fusion_best.pt,10,35.871,3585.49,0.28,2.088,2.464,0.376,88.395,8839.5,0.11,5.3,465.0
+2026-10-29 15:32:19,Raspberry Pi 4B,Ours: v34_early_fusion (4-Ch Early),weights/v34_early_fusion_best.pt,10,21.994,2199.33,0.45,2.088,2.541,0.452,55.88,5588.0,0.18,5.3,479.4
+2026-10-29 15:32:58,Raspberry Pi 4B,Ours: v30 (Thermal Dilated ECA),weights/v30_champion_best.pt,10,22.002,2200.13,0.45,2.088,2.543,0.455,55.952,5595.16,0.18,5.3,479.8
+2026-10-29 15:34:09,Raspberry Pi 4B,Ours: v38_cwar_triad (3-Stream CWAR),CWAR_TRIAD,5,39.568,7913.51,0.13,2.088,3.057,0.969,120.966,24193.29,0.04,5.3,576.8
+2026-10-29 15:35:10,Raspberry Pi 4B,Ours: v36_main (Asym CA+ECA),weights/v36_main_best.pt,10,39.562,3955.13,0.25,2.088,2.533,0.444,100.203,10020.29,0.1,5.3,477.9
+2026-10-29 15:36:10,Raspberry Pi 4B,Ours: v36_eca_rgb (Asym ECA),weights/v36_eca_rgb_best.pt,10,39.193,3918.23,0.26,2.088,2.534,0.446,99.323,9932.3,0.1,5.3,478.2
+2026-10-29 15:37:16,Raspberry Pi 4B,Ours: v38_ca_dilated (Sym-Dil+NeckECA),weights/v38_ca_dilated_best.pt,10,40.588,4058.03,0.25,2.088,2.524,0.435,102.436,10243.62,0.1,5.3,476.2
