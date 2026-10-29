@@ -1,0 +1,14 @@
+Device,Model,Channels,Latency_ms,Latency_std_ms,Throughput_FPS,Idle_Board_Power_W,Active_Board_Power_W,CPU_Rail_Power_W,Total_Energy_mJ_frame,Active_Energy_mJ_frame,Frames_per_Joule
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),Ours: v30 (Thermal Hybrid Dilated ECA),3,106.23,13.09,9.41,3.648,4.902,1.666,520.7,133.2,1.92
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),Ours: v34_early_fusion (4-Ch Early Fusion),4,110.25,11.66,9.07,3.648,4.805,1.608,529.7,127.6,1.89
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),Ours: v35_dual_fusion (Gated Dual-Stream),6,156.74,9.19,6.38,3.648,5.677,2.33,889.9,318.1,1.12
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),Ours: v36_main (Asym CA+ECA Dual-Stream),6,171.98,24.64,5.81,3.648,6.202,2.668,1066.6,439.3,0.94
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),Ours: v36_eca_rgb (Asym ECA Dual-Stream),6,172.6,12.57,5.79,3.648,5.82,2.436,1004.6,375.0,1.0
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),Ours: v38_ca_dilated (Sym-Dilated + NeckECA),6,182.52,27.79,5.48,3.648,6.052,2.563,1104.6,438.8,0.91
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),Ours: v38_cwar_triad (3-Stream 2D-Grid CWAR),6,504.98,23.28,1.98,3.648,11.375,6.833,5744.3,3902.3,0.17
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),YOLOv8n,3,121.98,14.62,8.2,3.648,4.832,1.686,589.4,144.5,1.7
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),YOLOv8s,3,251.5,10.9,3.98,3.648,7.032,3.441,1768.6,851.3,0.57
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),YOLOv10n,3,117.12,10.66,8.54,3.648,4.847,1.676,567.7,140.4,1.76
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),YOLOv10s,3,258.63,14.17,3.87,3.648,6.884,3.258,1780.3,836.9,0.56
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),YOLO11n,3,116.38,10.89,8.59,3.648,4.737,1.608,551.3,126.8,1.81
+Jetson AGX Xavier (CPU - 8x Carmel ARMv8.2),YOLO11s,3,241.8,10.46,4.14,3.648,6.77,3.181,1637.0,755.0,0.61

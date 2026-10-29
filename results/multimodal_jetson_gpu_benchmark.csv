@@ -1,0 +1,12 @@
+Device,Model,Channels,Latency_ms,Min_Latency_ms,Max_Latency_ms,Throughput_FPS,Idle_Board_Power_W,Active_Board_Power_W,GPU_Rail_Power_W,Total_Energy_mJ_frame,Active_Energy_mJ_frame,Frames_per_Joule
+Jetson AGX Xavier (GPU - Volta FP16),Ours: v30 (Thermal Hybrid Dilated ECA),3,6.61,6.01,24.23,151.34,3.646,13.059,4.923,86.29,62.2,11.59
+Jetson AGX Xavier (GPU - Volta FP16),Ours: v34_early_fusion (4-Ch Early Fusion),4,6.54,6.45,6.64,152.83,3.646,14.605,5.688,95.56,71.7,10.46
+Jetson AGX Xavier (GPU - Volta FP16),Ours: v35_dual_fusion (Gated Dual-Stream),6,8.95,8.82,9.12,111.77,3.646,15.76,6.773,141.0,108.38,7.09
+Jetson AGX Xavier (GPU - Volta FP16),Ours: v36_main (Asym CA+ECA Dual-Stream),6,10.72,10.52,10.85,93.3,3.646,15.782,6.54,169.14,130.07,5.91
+Jetson AGX Xavier (GPU - Volta FP16),Ours: v36_eca_rgb (Asym ECA Dual-Stream),6,10.07,9.74,10.28,99.34,3.646,14.811,5.754,149.08,112.38,6.71
+Jetson AGX Xavier (GPU - Volta FP16),Ours: v38_ca_dilated (Sym-Dilated + NeckECA),6,10.7,10.5,10.87,93.5,3.646,15.103,6.284,161.53,122.54,6.19
+Jetson AGX Xavier (GPU - Volta FP16),Ours: v38_cwar_triad (3-Stream 2D-Grid CWAR),6,31.84,31.11,32.35,31.41,3.646,15.232,6.193,484.99,368.9,2.06
+Jetson AGX Xavier (GPU - Volta FP16),YOLOv8n,3,6.43,6.15,24.65,155.57,3.646,13.576,5.353,87.26,63.83,11.46
+Jetson AGX Xavier (GPU - Volta FP16),YOLOv8s,3,10.46,10.32,12.15,95.62,3.646,16.775,7.86,175.44,137.31,5.7
+Jetson AGX Xavier (GPU - Volta FP16),YOLO11n,3,7.0,6.43,19.34,142.91,3.646,13.159,4.904,92.07,66.56,10.86
+Jetson AGX Xavier (GPU - Volta FP16),YOLO11s,3,11.06,10.92,11.19,90.42,3.646,16.285,7.321,180.09,139.77,5.55
