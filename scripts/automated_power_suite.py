@@ -64,7 +64,9 @@ def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", 
     print("\n[1/4] Connecting to Joulescope JS220...")
     device = joulescope.scan_require_one(config="auto")
     device.open()
-    print(f"  Connected: {device}")
+    device.parameter_set("i_range", "auto")
+    device.parameter_set("sensor_power", "on")
+    print(f"  Connected: {device} (Power Output ON, i_range=auto)")
 
     # 2. Connect SSH
     print("\n[2/4] Connecting SSH to Edge Device...")
