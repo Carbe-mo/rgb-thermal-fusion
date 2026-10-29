@@ -49,12 +49,13 @@ def save_power_row(row_dict):
 
 
 def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", password="rock",
-                                  runs=10, models=None, remote_dir="/home/rock/mohit/Custom-Thermal-YOLO-model"):
+                                  runs=10, models=None, remote_dir="~/rgb-thermal-fusion",
+                                  device_name="Rock Pi 4C+"):
     if models is None:
         models = DEFAULT_MODELS
 
     print("=" * 80)
-    print(f"  AUTOMATED JOULESCOPE JS220 POWER BENCHMARK: {username}@{target_ip}")
+    print(f"  AUTOMATED JOULESCOPE JS220 POWER BENCHMARK: {device_name} ({username}@{target_ip})")
     print(f"  Inferences per model: {runs}")
     print(f"  Total models to test: {len(models)}")
     print("=" * 80)
@@ -193,7 +194,7 @@ def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", 
 
             rec = {
                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "Target_Device": "Rock Pi 4C+",
+                "Target_Device": device_name,
                 "Model_Name": name,
                 "Weights": weights,
                 "Inferences": runs,
@@ -232,5 +233,24 @@ def run_automated_power_benchmark(target_ip="192.168.137.168", username="rock", 
 
 
 if __name__ == "__main__":
-    ip = sys.argv[1] if len(sys.argv) > 1 else "192.168.137.168"
-    run_automated_power_benchmark(target_ip=ip)
+    import argparse
+    parser = argparse.ArgumentParser(description="Automated Joulescope JS220 + SSH Edge Power & Latency Suite")
+    parser.add_argument("--ip", type=str, default="192.168.137.168", help="Target edge device IP address")
+    parser.add_argument("--user", type=str, default="rock", help="SSH username (e.g., rock, pi)")
+    parser.add_argument("--password", type=str, default="rock", help="SSH password")
+    parser.add_argument("--remote-dir", type=str, default="~/rgb-thermal-fusion", help="Path to cloned repo on edge device")
+    parser.add_argument("--device-name", type=str, default="Rock Pi 4C+", help="Device name for CSV logging")
+    parser.add_argument("--runs", type=int, default=10, help="Number of synchronized inferences per model")
+    parser.add_argument("--only-multimodal", action="store_true", help="Only run multimodal models + v30 champion")
+    args = parser.parse_args()
+
+    selected_models = DEFAULT_MODELS[:5] if args.only_multimodal else DEFAULT_MODELS
+    run_automated_power_benchmark(
+        target_ip=args.ip,
+        username=args.user,
+        password=args.password,
+        runs=args.runs,
+        models=selected_models,
+        remote_dir=args.remote_dir,
+        device_name=args.device_name,
+    )
